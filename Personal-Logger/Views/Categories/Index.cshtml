@@ -1,0 +1,72 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>My Log Categories</h2>
+@Html.ActionLink("Add a Category", "Create", "Categories", null, new { @class = "btn btn-success mu-2 mb-2" })
+
+
+<table id="categories" class="table table-striped">
+    <thead class="thead-light">
+    <th>Category</th>
+    <th class="w-10">Details</th>
+    <th class="w-10">Delete</thclass="w-10">
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+@section scripts{
+    <script>
+        $(document).ready(function () {
+            
+
+            var table = $("#categories").DataTable({
+                ajax: {
+                    url: "/api/categories",
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "categoryName"
+                    },
+                    {
+                        data: "id",
+                        render: function (data) {
+                            return "<a href='/categories/details/" + data + "'><button class='btn btn-success'>Details</button>";
+                        }
+                        
+                    },
+                    {
+                        data: "id",
+                        render: function (data) {
+                            return "<button data-category-id='" + data + "' class='btn btn-danger js-delete'>Delete</button>"
+                        }
+                       
+                    }
+                ]
+            });
+
+            $("#categories").on("click", '.js-delete', function () {
+                var button = $(this);
+                bootbox.confirm("Delete this cateory? All related logs will be deleted too", function (result) {
+                    if (result) {
+                        $.ajax({
+                            url: "/api/categories/" + button.attr("data-category-id"),
+                            method: "DELETE",
+                            success: function () {
+                                toastr.success("Category Successfully Deleted");
+                                table.row(button.parents("tr")).remove().draw();
+                            }
+                        });
+                    }
+                })
+            });
+
+
+        });
+
+    </script>
+    
+}

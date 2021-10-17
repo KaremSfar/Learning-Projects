@@ -1,0 +1,182 @@
+﻿
+@{
+    ViewBag.Title = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Add Log</h2>
+
+<form id="newLog">
+    <div class="form-group">
+        <label>Category</label>
+        <div class="tt-container">
+            <input id="category" name="category" required type="text" value="" class="form-control" />
+        </div>
+    </div>
+    <div id="fields">
+    </div>
+    <button id="submit" class="btn btn-primary">Add</button>
+</form>
+
+
+@*
+    //TODO
+    TAKE THIS JS CODE FAR FROM HERE AAAH
+*@
+
+@section scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+
+            var categoryId;
+
+            var myLog = {
+                Fields: []
+            }
+
+            var categories = new Bloodhound({
+                datumTokenizer: Bloodhound.tokenizers.obj.whitespace('categoryName'),
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    url: '/api/categories?query=%QUERY',
+                    wildcard: '%QUERY'
+                }
+            });
+
+            $('#category').typeahead({
+                minlength: 3,
+                highlight: true
+            }, {
+                name: 'categories',
+                display: 'categoryName',
+                source: categories
+            }).on("typeahead:select", function (e, category) {
+
+                categoryId = category.id;
+
+                myLog.LogcategoryId = categoryId;
+
+                $("#fields").empty();
+
+                $.each(category.categoryFields, function (index, categoryField) {
+                    $("#fields").append(makeFieldForm(categoryField));
+                });
+
+            });
+
+            $.validator.addMethod("isInteger", function (value) {
+                if (value.length==0) {
+                    return false;
+                }
+                val = Number(value);
+                return Number.isInteger(val);
+            }, "this must be an integer");
+
+            $.validator.addMethod("isString", function (value) {
+                if (value.length < 3) {
+                    return false;
+                }
+                return true;
+            }, "this must be at least 3 characters");
+
+            $.validator.addMethod("isDecimal", function (value) {
+                if (value.length == 0) {
+                    return false;
+                }
+                val = Number(value);
+                return !isNaN(val);
+            }, "this must be a number input");
+
+            var validator = $("#newLog").validate({
+                submitHandler: function () {
+                    var fieldsForm = $("#fields input");
+
+                    $.each(fieldsForm, function (index, fieldForm) {
+                        var categoryFieldId = fieldForm.getAttribute("category-field-id");
+                        var fieldValue = fieldForm.value;
+
+                        console.log(typeof fieldValue);
+
+                        myLog.Fields.push({
+                            categoryField: {
+                                Id: categoryFieldId
+                            },
+                            value: fieldValue
+                        });
+                    });
+
+                    console.log(myLog);
+
+                    $.ajax({
+                        url: "/api/myLogs",
+                        method: "post",
+                        data: myLog
+                    }).done(function () {
+                        toastr.success("Log Successfully recorded");
+                        validator.resetForm();
+                        window.location.reload();
+
+                    })
+                    .fail(function () {
+                        toastr.error("Weird but didnt work");
+                    });
+
+                    return false;
+                }
+            });
+
+
+        });
+
+
+
+        function makeFieldForm({ id, fieldName, fieldType }) {
+            var str = "<div class='form-group'>";
+            str += "<label>" + fieldName + " - " + fieldType.typeName + "</label>";
+            str += "<input "+ getValidation(fieldType.typeName) +" category-field-id='" + id + "' type = '" + getType(fieldType.typeName) + "' name = " + fieldName + " class= 'form-control' > ";
+            str += "</div>";
+            return str;
+        }
+
+        function getType(fieldType) {
+            switch (fieldType) {
+                case "Int":
+                    return "Number";
+                    break;
+                case "String":
+                    return "text";
+                    break;
+                case "TimeSpan":
+                    return "time";
+                    break;
+                case "Decimal":
+                    return "Number";
+                    break;
+                default:
+                    return 'text';
+            }
+        }
+
+        function getValidation(fieldType) {
+            switch (fieldType) {
+                case "Int":
+                    return "data-rule-isInteger='true'";
+                    break;
+                case "String":
+                    return "data-rule-isString='true'";
+                    break;
+                case "TimeSpan":
+                    return "data-rule-isTimeSpan='true'";
+                    break;
+                case "Decimal":
+                    return "data-rule-isDecimal='true'";
+                    break;
+                default:
+                    return '';
+            }
+        }
+
+
+    </script>
+}

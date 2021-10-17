@@ -1,0 +1,41 @@
+﻿
+@{
+    ViewBag.Title = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Category Details</h2>
+
+<div class="container">
+    <div class="">
+        <label>Category Name :</label>
+        <label id="categoryName">lol</label>
+    </div>
+    <div class="w-30vw" id="fields">
+        <label>Fields :</label>
+        <ul id="fieldList">
+        </ul>
+    </div>
+</div>
+
+@section scripts{
+    <script>
+        $(document).ready(function () {
+
+            $.ajax({
+                url: "/api/categories/" + @(ViewContext.RouteData.Values["id"]),
+                type: "get",
+                success: function (data) {
+                    $("#categoryName").text(data.categoryName);
+                    $.each(data.categoryFields, function (index, stuff) {
+                        $("#fieldList").append("<li class='list-group-item'>" + stuff.fieldName + "</li>");
+                    })
+                }
+            });
+
+
+
+        });
+    </script>
+
+} 

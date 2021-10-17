@@ -1,0 +1,63 @@
+﻿@model List<Vidly.Models.Movie>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Movies</h2>
+@Html.ActionLink("New Movie", "Create", "Movies", null, new { @class = "btn btn-success mu-2 mb-2" })
+
+@if (!Model.Any())
+{
+    <tr>Empty Result :')</tr>
+}
+else
+{
+    <table id="movies" class="table table-primary table-dark table-bordered">
+        <thead class="thead-light">
+            <th>Movie</th>
+            <th>Genre</th>
+            <th style="width:10%">Details</th>
+            <th style="width:10%">Delete</th>
+        </thead>
+
+        <tbody>
+            @foreach (var Movie in Model)
+            {
+            <tr>
+                <td>@Html.ActionLink(Movie.Name, "Edit", "Movies", new { id = Movie.Id }, new { })</td>
+                <td>@Movie.Genre.Name</td>
+                <td>@Html.ActionLink("Details", "Detail", "Movies", new { id = Movie.Id }, new { @class = "btn btn-primary" })</td>
+                <td><button data-movie-id="@Movie.Id" class="btn btn-danger js-delete">Delete</button></td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var table = $("#movies").DataTable();
+
+            $("#movies").on("click", ".js-delete", function () {
+                var button = $(this);
+                bootbox.confirm("You sure ?", function (result) {
+                    if (result) {
+                        console.log("alou");
+                        $.ajax({
+                            url: "/api/movies/" + button.attr("data-movie-id"),
+                            method: "DELETE",
+                            success: function () {
+                                console.log("Success");
+                                button.parents("tr").remove();
+                            }
+                        });
+                    }
+                })
+            });
+        });
+    </script>
+}

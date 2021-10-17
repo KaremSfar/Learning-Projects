@@ -1,0 +1,130 @@
+﻿
+@{
+    ViewBag.Title = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>New Category</h2>
+
+<form id="newCategory">
+
+    <div class="form-group">
+        <label>Category Name</label>
+        <input name="category" data-rule-validCategoryName="true" id="categoryName" type="text" value="" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label>Category Fields</label>
+        <div class="tt-container d-flex justify-content-between w-30vw">
+            <label>Field </label>
+            <label class="">Type</label>
+        </div>
+        <div class="field-list mb-3">
+            <ul id="fieldList" class="list-group"></ul>
+        </div>
+        <div class="tt-container d-flex justify-content-between w-50vw">
+            <input id="fieldName"  name="fields" type="text" value="" class="form-control w-25" />
+            <select id="typeSelect" class="form-control w-25">
+            </select>
+            <button id="addField" class="btn btn-success">+</button>
+        </div>
+
+        <button class="btn btn-primary mt-3">Submit</button>
+
+    </div>
+
+</form>
+
+
+
+@*TODO :
+    PUT ALL THIS JS CODE SOMEWHERE ELSE PLS
+*@
+
+@section scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+            var category = {
+                categoryFields: []
+            };
+
+            $.ajax({
+                url: '/api/fieldTypes',
+                type: 'get',
+                success: function (data) {
+                    $.each(data, function (index, stuff) {
+                        var option = new Option(stuff.typeName, stuff.id);
+                        $(option).html(stuff.typeName);
+                        $("#typeSelect").append(option);
+                    })
+                }
+            });
+
+            $("#addField").click(function (event) {
+                event.preventDefault();
+                var fieldName = $("#fieldName").val();
+                if (fieldName.length < 4) {
+                    toastr.error("Field Name must not be empty and must have at least 4 characters");
+                    return;
+                }
+                var fieldType = $("select#typeSelect option:checked").text();
+                var fieldTypeId = $("select#typeSelect option:checked").val();
+
+                category.categoryFields.push({
+                    FieldName: fieldName,
+                    FieldType: {
+                        Id: fieldTypeId
+                    }
+                });
+
+                $("#fieldList").append("<li class='list-group-item'>" + fieldName + " - " + fieldType + "</li>");
+
+                $("#fieldName").val("");
+            });
+
+
+            $.validator.addMethod("validCategoryName", function () {
+                return $("#categoryName").val().length > 3;
+            }, "Category name is at least 3 characters");
+
+
+
+            var validator = $("#newCategory").validate({
+                submitHandler: function () {
+
+                    category.categoryName = $("#categoryName").val();
+
+                    $.ajax({
+                        url: "/api/categories",
+                        method: "post",
+                        data: category
+                    })
+                    .done(function () {
+                        toastr.success("Category Added");
+
+                        category = {
+                            categoryFields: []
+                        };
+
+                        $("#categoryName").val("");
+                        $("#fieldList").empty();
+
+
+                        validator.resetForm();
+
+
+
+                    })
+                    .fail(function () {
+                        toastr.error("Weird but didnt work");
+                    });
+
+                    return false;
+                }
+            });
+
+
+        });
+    </script>
+}

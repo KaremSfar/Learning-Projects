@@ -1,0 +1,66 @@
+﻿@model List<Vidly.Models.Customer>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Customers</h2>
+@Html.ActionLink("New Customer", "Create", "Customers", null, new { @class = "btn btn-success mu-2 mb-2" })
+
+<table id="customers" class="table table-dark">
+    <thead class="thead-light">
+    <th>Name</th>
+    <th>Offer Type</th>
+    <th>Delete</th>
+    </thead>
+    <tbody>
+    </tbody>
+
+</table>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var table = $("#customers").DataTable({
+                ajax: {
+                    url: "/api/customers",
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "name",
+                        render: function (data, type, customer) {
+                            return "<a href='/customers/edit/" + customer.id + "'>" + customer.name + "</a>"
+                        }
+                    },
+                    {
+                        data: "membership.name"
+                    },
+                    {
+                        data: "id",
+                        render: function (data) {
+                            return "<button data-customer-id='" + data + "' class='btn btn-danger js-delete'>Delete</button>"
+                        }
+                    }
+                ]
+            });
+
+
+            $("#customers").on("click", '.js-delete', function () {
+                var button = $(this);
+                bootbox.confirm("alouu", function (result) {
+                    if (result) {
+                        $.ajax({
+                            url: "/api/customers/" + button.attr("data-customer-id"),
+                            method: "DELETE",
+                            success: function () {
+                                table.row(button.parents("tr")).remove().draw();
+                            }
+                        });
+                    }
+                })
+            });
+        });
+    </script>
+}

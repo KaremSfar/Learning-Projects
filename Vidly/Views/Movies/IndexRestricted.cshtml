@@ -1,0 +1,33 @@
+﻿@model List<Vidly.Models.Movie>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Movies</h2>
+
+@if (!Model.Any())
+{
+    <tr>Empty Result :')</tr>
+}
+else
+{
+    <table id="movies" class="table table-primary table-dark table-bordered">
+        <thead class="thead-light">
+            <th>Movie</th>
+            <th>Genre</th>
+            <th style="width:10%">Details</th>
+        </thead>
+
+        <tbody>
+            @foreach (var Movie in Model)
+            {
+            <tr>
+                <td>@Html.ActionLink(Movie.Name, "Edit", "Movies", new { id = Movie.Id }, new { })</td>
+                <td>@Movie.Genre.Name</td>
+                <td>@Html.ActionLink("Details", "Detail", "Movies", new { id = Movie.Id }, new { @class = "btn btn-primary" })</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}

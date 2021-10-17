@@ -1,0 +1,164 @@
+﻿
+@{
+    ViewBag.Title = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 id="title">Details</h2>
+
+<button id="addLog"class="btn btn-success mt-2 mb-5">Create Logs</button>
+
+<div class="chart-container">
+    <canvas id="myChart" class="chart-canvas chartjs-render-monitor" ></canvas>
+</div>
+
+
+
+<table id="logs" class="table table-striped">
+    <thead class="thead-light">
+        <th>Log Date</th>
+        <th class="w-10">Delete</th class="w-10">
+    </thead>
+
+    <tbody>
+
+    </tbody>
+</table>
+
+@section scripts{
+    <script>
+        $(document).ready(function () {
+            var categoryId = @(ViewContext.RouteData.Values["id"]);
+
+
+            //GET 7 LAST DAYS STUFF
+
+
+            var day = moment();
+            let days = [day.format("dddd")];
+
+            for (var i = 1; i < 7; i++) {
+                day.add(-1, 'd');
+                days.unshift(day.format("dddd"));
+            }
+
+            let logs = [];
+
+            //GET LOGS FROM PAST 7 DAYS
+            $.ajax({
+                url: "/api/myLogs?categoryId" + categoryId + "lastDays=7",
+                type: "get",
+                success: function (data) {
+                    for (var i = 0; i < 7;i++) {
+                        var a = data.filter(log => moment(log.logDate).format("dddd") === days[i]);
+                        logs.push(a.length);
+                    }
+                }
+            })
+
+
+            //CHART STUFF
+            var ctx = $("#myChart");
+
+            console.log(logs);
+            console.log(days);
+
+            for (i of logs) {
+                console.log(i)
+            }
+
+            let myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: "Logs during last week",
+                        data: logs,
+                        fill: false,
+                        borderColor: "rgba(0,0,0,1)",
+                        lineTension: 0
+                    }]
+                },
+                options: {
+                    aspectRatio: 2,
+                    maintainAspectRatio: true,
+                    tooltips: {
+                        mode: 'index'
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
+                            },
+                            ticks: {
+                                suggestedMin: 0,
+                                suggestedMax: 5,
+                            }
+                        }]
+                    }
+                }
+
+            });
+
+
+
+
+
+            //DATATABLES STUFF
+            var table = $("#logs").DataTable({
+                ajax: {
+                    url: "/api/myLogs?categoryId="+categoryId,
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "logDate"
+                    },
+                    {
+                        data: "id",
+                        render: function (data) {
+                            return "<button data-log-id='" + data + "' class='btn btn-danger js-delete'>Delete</button>"
+                        }
+
+                    }
+                ]
+            });
+
+
+            $("#logs").on("click", '.js-delete', function () {
+                var button = $(this);
+                bootbox.confirm("Delete this log ?", function (result) {
+                    if (result) {
+                        $.ajax({
+                            url: "/api/myLogs/" + button.attr("data-log-id"),
+                            method: "DELETE",
+                            success: function () {
+                                toastr.success("Log Successfully Discarded");
+                                table.row(button.parents("tr")).remove().draw();
+                            }
+                        });
+                    }
+                })
+            });
+
+            $("#addLog").click(function () {
+                    window.location.replace("/MyLogs/Create");
+            });
+
+
+
+
+
+        });
+    </script>
+    
+    
+}
